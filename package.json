@@ -1,0 +1,31 @@
+{
+  "name": "discord-bot",
+  "version": "1.0.0",
+  "description": "Bot for LFM Discord",
+  "main": "app.js",
+  "scripts": {
+    "test": "echo \"Error: no test specified\" && exit 1"
+  },
+  "repository": {
+    "type": "git",
+    "url": "git+https://github.com/NoxPhoenix/discord-bot.git"
+  },
+  "keywords": [
+    "discord"
+  ],
+  "author": "NoxPhoenix",
+  "license": "ISC",
+  "bugs": {
+    "url": "https://github.com/NoxPhoenix/discord-bot/issues"
+  },
+  "homepage": "https://github.com/NoxPhoenix/discord-bot#readme",
+  "dependencies": {
+    "discord.js": "^11.2.1",
+    "uws": "^8.14.1"
+  },
+  "devDependencies": {
+    "eslint": "^4.6.1",
+    "eslint-config-airbnb-base": "^12.0.0",
+    "eslint-plugin-import": "^2.7.0"
+  }
+}
