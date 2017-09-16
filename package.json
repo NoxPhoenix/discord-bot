@@ -20,6 +20,7 @@
   },
   "homepage": "https://github.com/NoxPhoenix/discord-bot#readme",
   "dependencies": {
+    "bluebird": "^3.5.0",
     "discord.js": "^11.2.1",
     "uws": "^8.14.1"
   },
