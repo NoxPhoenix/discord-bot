@@ -10,10 +10,9 @@ class MessageHandler {
   constructor(bot) {
     this.bot = bot;
     this.bot.on('message', (message) => {
-      console.log(message);
       const { content } = message;
-      if (content.author.bot) return;
-      if (content.startsWith(config.prefix)) callCommand(message);
+      if (message.author.bot) return;
+      if (content.startsWith(config.Prefix)) callCommand(message);
     });
   }
 }
