@@ -1,15 +1,26 @@
 const config = require('../config.json');
 const voiceChannels = require('../lib/voiceChannels');
 
-function voiceChannelEvent(memberVoiceStateUpdate) {
-  return voiceChannels.automated.run(memberVoiceStateUpdate);
+function stateChangeType({ oldState, newState }) {
+  if (oldState.voiceChannelID !== newState.voiceChannelID && newState.voiceChannelID !== null) return 'joinedChannel';
+  else if (newState.voiceChannelID === null) return 'leftChannel';
+  return null;
 }
 
 class VoiceChannelsHandler {
   constructor(bot) {
     this.bot = bot;
     this.bot.on('voiceStateUpdate', (oldState, newState) => {
-      voiceChannelEvent({ oldState, newState });
+      const memberVoiceStateUpdate = { oldState, newState };
+      switch (stateChangeType(memberVoiceStateUpdate)) {
+        case 'joinedChannel':
+          voiceChannels.automated.join(memberVoiceStateUpdate);
+          break;
+        case 'leftChannel':
+          voiceChannels.automated.left(memberVoiceStateUpdate);
+          break;
+        default: break;
+      }
     });
   }
 }
