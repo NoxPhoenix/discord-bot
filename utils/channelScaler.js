@@ -44,11 +44,12 @@ const Scaler = {
       });
   },
 
-  scaleDown(channels) {
-    channels.splice(0, 1);
-    return Promise.map(channels, (c) => {
-      c.delete();
-    });
+  scaleDown(channel) {
+    this.emptyDuplicates(channel)
+      .then((emptyDupes) => {
+        emptyDupes.splice(0, 1);
+        return Promise.map(emptyDupes, c => c.delete());
+      });
   },
 };
 
