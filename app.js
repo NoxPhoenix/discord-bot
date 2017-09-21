@@ -4,6 +4,9 @@ const { Token } = require('./config.json');
 
 const bot = new Discord.Client();
 
+// Listener for RSS Feed changes for the podcast
+require('./utils/podcastFeed');
+
 require('./handlers/messages')(bot);
 require('./handlers/voiceChannels')(bot);
 require('./handlers/server')(bot);

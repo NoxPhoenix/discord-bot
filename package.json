@@ -4,7 +4,8 @@
   "description": "Bot for LFM Discord",
   "main": "app.js",
   "scripts": {
-    "test": "echo \"Error: no test specified\" && exit 1"
+    "test": "echo \"Error: no test specified\" && exit 1",
+    "bot": "nodemon app.js"
   },
   "repository": {
     "type": "git",
@@ -22,8 +23,12 @@
   "dependencies": {
     "bluebird": "^3.5.0",
     "discord.js": "^11.2.1",
+    "feedme": "^1.0.1",
     "random-animal": "^1.0.7",
     "random-cat": "^1.0.1",
+    "request": "^2.81.0",
+    "rls-api": "^1.0.2",
+    "sqlite3": "^3.1.11",
     "uws": "^8.14.1"
   },
   "devDependencies": {
