@@ -1,4 +1,5 @@
 const sqlite3 = require('sqlite3');
+
 const db = new sqlite3.Database('./members');
 
 function bootStrap() {
@@ -10,11 +11,12 @@ function bootStrap() {
     steamID TEXT UNIQUE,
     psnID TEXT UNIQUE,
     xboxID TEXT UNIQUE
-  )`);
+  )`, () => console.log('members table initiated.'));
 
   db.run(`CREATE TABLE IF NOT EXISTS ranks(
     id INTEGER PRIMARY KEY AUTOINCREMENT,
-    discordID TEXT NOT NULL UNIQUE,
+    discordID TEXT NOT NULL,
+    dateOfValidity DATETIME DEFAULT CURRENT_TIMESTAMP,
     1v1mmr INTEGER,
     1v1Tier INTEGER,
     1v1Division INTEGER,
@@ -28,8 +30,11 @@ function bootStrap() {
     s3v3Tier INTEGER,
     s3v3Division INTEGER,
     rankSignature TEXT,
-  )`);
+  )`, () => console.log('ranks table initiated.'));
 }
+
+const membersColumns = ['discordID', 'discordDiscriminator', 'defaultPlatform', 'steamID', 'psnID', 'xboxID'];
+const ranksColumns = ['discordID', 'dateOfValidity', '1v1mmr', '1v1Tier', '1v1Division', '2v2mmr', '2v2Tier', '2v2Division', '3v3mmr', '3v3Tier', '3v3Division', 's3v3mmr', 's3v3Tier', 's3v3Division', 'rankSignature'];
 
 bootStrap();
 
@@ -43,7 +48,7 @@ module.exports = {
   },
 
   updateMember(member, { platform, id }) {
-    db.run(`UPDATE members SET ${platform}ID = ${id} WHERE discordID = ${member.id}`, (err, result) => {
+    db.run(`UPDATE members SET ${platform}ID = ${id}, defaultPlatform = ${platform} WHERE discordID = ${member.id}`, (err, result) => {
       if (err) console.log(err);
       return result;
     });
@@ -60,5 +65,14 @@ module.exports = {
     VALUES (${member.id}, ${user.discriminator}), ${id})`);
   },
 
+  getLatestMemberCache(member) {
+    return db.get(
+      `SELECT * FROM ranks
+      WHERE discordID = ${member.id}, DATE(dateOfValidity) = (SELECT MAX(DATE(dateOfValidity)) FROM ranks)`, (err, data) => data);
+  },
 
+  createMemberCache(member, rankData) {
+    //parse rankData into a string for statement
+    return db.run(`INSERT INTO ranks () VALUES (${member.id}, )`)
+  },
 };

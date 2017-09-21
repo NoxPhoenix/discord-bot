@@ -6,6 +6,7 @@ const bot = new Discord.Client();
 
 // Listener for RSS Feed changes for the podcast
 require('./utils/podcastFeed');
+require('./data/db');
 
 require('./handlers/messages')(bot);
 require('./handlers/voiceChannels')(bot);
