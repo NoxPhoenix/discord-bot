@@ -55,24 +55,36 @@ module.exports = {
   },
 
   createMember(member, gamerInfo) {
-    if (this.memberExists(member)) this.updateMember(member, gamerInfo);
-    this.initiateMember(member, gamerInfo);
+    if (this.memberExists(member)) return this.updateMember(member, gamerInfo);
+    return this.initiateMember(member, gamerInfo);
   },
 
   initiateMember(member, { platform, id }) {
     const { user } = member;
-    db.run(`INSERT INTO members (discordID, discordDiscriminator, ${platform}ID)
-    VALUES (${member.id}, ${user.discriminator}), ${id})`);
+    db.run(
+      `INSERT INTO members (discordID, discordDiscriminator, ${platform}ID)
+      VALUES (${member.id}, ${user.discriminator}), ${id})`,
+      (err) => {
+        if (err === null) return 'Success';
+        return 'Failed';
+      },
+    );
   },
 
   getLatestMemberCache(member) {
     return db.get(
       `SELECT * FROM ranks
-      WHERE discordID = ${member.id}, DATE(dateOfValidity) = (SELECT MAX(DATE(dateOfValidity)) FROM ranks)`, (err, data) => data);
+      WHERE discordID = ${member.id}, DATE(dateOfValidity) = (SELECT MAX(DATE(dateOfValidity)) FROM ranks)`,
+      (err, data) => data,
+    );
   },
 
-  createMemberCache(member, rankData) {
+  getMemberInfo(member) {
+    return db.get(`SELECT * FROM members WHERE discordID = ${member.id}`, (err, row) => row);
+  },
+
+  createRankCache(member, rankData) {
     //parse rankData into a string for statement
-    return db.run(`INSERT INTO ranks () VALUES (${member.id}, )`)
+    return db.run(`INSERT INTO ranks (${ranksColumns}) VALUES (${member.id}, )`);
   },
 };
