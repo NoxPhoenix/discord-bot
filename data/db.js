@@ -1,19 +1,20 @@
-const sqlite3 = require('sqlite3');
+const Promise = require('bluebird');
+const sqlite3 = Promise.promisifyAll(require('sqlite3'));
 
 const db = new sqlite3.Database('./members');
 
 function bootStrap() {
-  db.run(`CREATE TABLE IF NOT EXISTS members(
+  db.runAsync(`CREATE TABLE IF NOT EXISTS members(
     id INTEGER PRIMARY KEY AUTOINCREMENT,
     discordID TEXT NOT NULL UNIQUE,
-    discordDiscriminator TEXT NOT NULL UNIQUE
+    discordDiscriminator TEXT NOT NULL UNIQUE,
     defaultPlatform TEXT,
     steamID TEXT UNIQUE,
     psnID TEXT UNIQUE,
     xboxID TEXT UNIQUE
-  )`, () => console.log('members table initiated.'));
+  )`);
 
-  db.run(`CREATE TABLE IF NOT EXISTS ranks(
+  db.runAsync(`CREATE TABLE IF NOT EXISTS ranks(
     id INTEGER PRIMARY KEY AUTOINCREMENT,
     discordID TEXT NOT NULL,
     dateOfValidity DATETIME DEFAULT CURRENT_TIMESTAMP,
@@ -30,7 +31,7 @@ function bootStrap() {
     s3v3Tier INTEGER,
     s3v3Division INTEGER,
     rankSignature TEXT,
-  )`, () => console.log('ranks table initiated.'));
+  )`);
 }
 
 const membersColumns = ['discordID', 'discordDiscriminator', 'defaultPlatform', 'steamID', 'psnID', 'xboxID'];
@@ -41,50 +42,53 @@ bootStrap();
 module.exports = {
 
   memberExists(member) {
-    db.get(`SELECT discordID FROM members WHERE dicordID = ${member.id}`, (err, id) => {
-      if (id) return true;
-      return false;
-    });
+    return db.getAsync(`SELECT discordID FROM members WHERE dicordID = ${member.id}`)
+      .then((res) => {
+        if (res !== undefined) return true;
+        return false;
+      });
   },
 
   updateMember(member, { platform, id }) {
-    db.run(`UPDATE members SET ${platform}ID = ${id}, defaultPlatform = ${platform} WHERE discordID = ${member.id}`, (err, result) => {
-      if (err) console.log(err);
-      return result;
-    });
+    return db.runAsync(`UPDATE members SET ${platform}ID = ${id}, defaultPlatform = ${platform} WHERE discordID = ${member.id}`)
+      .then(({ changes }) => changes);
   },
 
   createMember(member, gamerInfo) {
-    if (this.memberExists(member)) return this.updateMember(member, gamerInfo);
-    return this.initiateMember(member, gamerInfo);
+    return this.memberExists(member)
+      .then((exists) => {
+        if (exists) return this.updateMember(member, gamerInfo);
+        return this.initiateMember(member, gamerInfo);
+      });
   },
 
   initiateMember(member, { platform, id }) {
     const { user } = member;
-    db.run(
-      `INSERT INTO members (discordID, discordDiscriminator, ${platform}ID)
-      VALUES (${member.id}, ${user.discriminator}), ${id})`,
-      (err) => {
-        if (err === null) return 'Success';
-        return 'Failed';
-      },
-    );
+    const platformID = `${platform}ID`;
+    console.log('Sql statement ---', `INSERT INTO members (discordID, discordDiscriminator, defaultPlatform, ${platformID})
+    VALUES (${member.id}, ${user.discriminator}, ${platform}, ${id})`);
+    db.runAsync(`INSERT INTO members (discordID, discordDiscriminator, defaultPlatform, ${platformID})
+      VALUES ("${member.id}", "${user.discriminator}", "${platform}", "${id}")`)
+      .then(({ lastID }) => lastID);
   },
 
+  // TODO: Promisify
   getLatestMemberCache(member) {
-    return db.get(
+    return db.getAsync(
       `SELECT * FROM ranks
       WHERE discordID = ${member.id}, DATE(dateOfValidity) = (SELECT MAX(DATE(dateOfValidity)) FROM ranks)`,
       (err, data) => data,
     );
   },
 
+  // TODO: Promisify
   getMemberInfo(member) {
-    return db.get(`SELECT * FROM members WHERE discordID = ${member.id}`, (err, row) => row);
+    return db.getAsync(`SELECT * FROM members WHERE discordID = ${member.id}`, (err, row) => row);
   },
 
+  // TODO: Promisify
   createRankCache(member, rankData) {
     //parse rankData into a string for statement
-    return db.run(`INSERT INTO ranks (${ranksColumns}) VALUES (${member.id}, )`);
+    return db.runAsync(`INSERT INTO ranks (${ranksColumns}) VALUES (${member.id}, )`);
   },
 };

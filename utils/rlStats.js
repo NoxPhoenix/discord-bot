@@ -1,4 +1,5 @@
-const rls = require('rls-api');
+const Promise = require('bluebird');
+const rls = Promise.promisifyAll(require('rls-api'));
 
 const cache = require('../data/db');
 
@@ -8,18 +9,17 @@ const statClient = new rls.Client({
 
 module.exports = {
 
-  playerByID({ platform, id }, cb) {
-    return statClient.getPlayer(id, rls.platforms[platform.toUpperCase()], (status, data) => {
-      if (status === 200) {
-        console.log(data.signatureUrl);
-        return cb(data.signatureUrl);
-      }
-      return cb('Data not found!');
-    });
+  playerByID({ platform, id }) {
+    return statClient.getPlayerAsync(id, rls.platforms[platform.toUpperCase()])
+      .then((response) => {
+        console.log('getPlayerResponse', response);
+        return response;
+      });
   },
 
   initiateMember(member, { platform, id }) {
-    return cache.createMember(member, { platform, id });
+    return cache.createMember(member, { platform, id })
+      .then(response => response);
   },
 
   getCache(member) {
