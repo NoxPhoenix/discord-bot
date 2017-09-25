@@ -1,5 +1,6 @@
 const Promise = require('bluebird');
-const rls = Promise.promisifyAll(require('rls-api'));
+const _ = require('lodash');
+const rls = require('rls-api');
 
 const cache = require('../data/db');
 
@@ -10,11 +11,12 @@ const statClient = new rls.Client({
 module.exports = {
 
   playerByID({ platform, id }) {
-    return statClient.getPlayerAsync(id, rls.platforms[platform.toUpperCase()])
-      .then((response) => {
-        console.log('getPlayerResponse', response);
-        return response;
+    return new Promise((resolve, reject) => {
+      statClient.getPlayer(id, rls.platforms[platform.toUpperCase()], (status, data) => {
+        if (status === 200 || status === 204) resolve(data);
+        reject(status);
       });
+    });
   },
 
   initiateMember(member, { platform, id }) {
