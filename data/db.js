@@ -48,9 +48,9 @@ const ranksColumns = [
   'ranked2v2MMR',
   'ranked2v2Tier',
   'ranked2v2Division',
-  'rankedSoloMMR',
-  'rankedSoloTier',
-  'rankedSoloDivision',
+  'rankedSolo3v3MMR',
+  'rankedSolo3v3Tier',
+  'rankedSolo3v3Division',
   'ranked3v3MMR',
   'ranked3v3Tier',
   'ranked3v3Division',
@@ -67,9 +67,9 @@ function parseRankData(rankData) {
   const currentRanks = rankData.rankedSeasons[config.currentSeasonID];
   const ranks = [];
   for (let i = 10; i < 14; i += 1) {
-    ranks.push(`"${currentRanks[i].rankpoints}"`, `"${currentRanks[i].tier}"`, `"${currentRanks[i].division}"`);
+    ranks.push(`"${currentRanks[i].rankPoints}"`, `"${currentRanks[i].tier}"`, `"${currentRanks[i].division}"`);
   }
-  ranks.push(rankData.signatureUrl);
+  ranks.push(`"${rankData.signatureUrl}"`);
   console.log(ranks.join(', '));
   return ranks.join(', ');
 }
@@ -85,7 +85,7 @@ module.exports = {
   },
 
   createPlayer(member, gamerInfo) {
-    return this.memberExists(member)
+    return this.playerExists(member)
       .then((exists) => {
         if (exists) return this.updatePlayer(member, gamerInfo);
         return this.initiatePlayer(member, gamerInfo);
@@ -102,17 +102,21 @@ module.exports = {
   initiatePlayer(member, { platform, id }) {
     const { user } = member;
     const platformID = `${platform}ID`;
-    console.log('Sql statement ---', `INSERT INTO members (discordID, discordDiscriminator, defaultPlatform, ${platformID})
-    VALUES ("${member.id}", "${user.discriminator}", "${platform}", "${id}")`);
-    dbAsync.runAsync(`INSERT INTO members (discordID, discordDiscriminator, defaultPlatform, ${platformID})
-      VALUES ("${member.id}", "${user.discriminator}", "${platform}", "${id}")`)
-      .then(({ lastID }) => lastID);
+    return dbAsync.runAsync(`INSERT INTO members (discordID, discordDiscriminator, defaultPlatform, ${platformID})
+      VALUES ("${member.id}", "${user.discriminator}", "${platform}", "${id}")`);
   },
 
   // TODO: Promisify
-  getLatestRankCache(member) {
+  getLatestRankCache(discordID) {
     return dbAsync.getAsync(`SELECT * FROM ranks
-      WHERE discordID = "${member.id}", DATETIME("dateOfValidity") = (SELECT MAX(DATETIME("dateOfValidity")) FROM ranks)`);
+      WHERE discordID = "${discordID}" ORDER BY dateOfValidity DESC LIMIT 1`)
+      .then((cache) => {
+        console.log('cacheFound', cache);
+        return cache;
+      })
+      .catch((err) => {
+        console.log('latestRankCacheError!', err);
+      });
   },
 
   // TODO: Promisify
@@ -121,8 +125,9 @@ module.exports = {
   },
 
   // TODO: Promisify
-  cacheCurrentRank(id, rankData) {
+  cacheCurrentRank(discordID, id, rankData) {
     const rankString = parseRankData(rankData);
-    return dbAsync.runAsync(`INSERT INTO ranks (${ranksColumns}) VALUES ("${id}", ${rankString})`);
+    const ranksColumnsStrings = ranksColumns.join(', ');
+    return dbAsync.runAsync(`INSERT INTO ranks (${ranksColumnsStrings}) VALUES ("${discordID}", ${rankString})`);
   },
 };

@@ -1,6 +1,5 @@
 const Promise = require('bluebird');
 const moment = require('moment');
-const _ = require('lodash');
 const rls = require('rls-api');
 
 const config = require('../config');
@@ -36,50 +35,60 @@ const playlistIDs = {
 
 module.exports = {
 
-  playerByID({ platform, id }) {
+  fetchRankFromApi(platform, id) {
     return new Promise((resolve, reject) => {
-      statClient.getPlayer(id, rls.platforms[platform.toUpperCase()], (status, data) => { // eslint-disable-line consistent-return
-        if (status === 200 || status === 204) {
-          return cache.cacheCurrentRank(id, data)
-            .then(() => cache.getPlayerInfo(id))
-            .then(ranks => resolve(ranks));
-        }
-        reject(status);
+      console.log(platform, id);
+      statClient.getPlayer(id, rls.platforms[platform.toUpperCase()], (status, data) => {
+        console.log(status);
+        if (status !== 200 && status !== 204) reject(status);
+        resolve(data);
       });
     });
+  },
+
+  fetchRankandUpdateCache(discordID, { platform, id }) {
+    return this.fetchRankFromApi(platform, id)
+      .then(data => cache.cacheCurrentRank(discordID, id, data))
+      .then(() => cache.getLatestRankCache(discordID))
+      .catch((err) => {
+        console.log(err);
+        throw new Error(err);
+      });
   },
 
   isValidCache(cachedRank, allowance) {
     const currentDateTime = moment();
     const cachedDateTime = moment(cachedRank.dateOfValidity);
-    const age = currentDateTime.diff(cachedDateTime, 'days', true);
+    const age = cachedDateTime.diff(currentDateTime, 'hours', true);
+    console.log('cache is the following old...', age);
     if (age > allowance) return false;
     return true;
   },
 
-  newPlayerInfo(platform, id) {
-    return this.playerByID({ platform, id });
+  newPlayerInfo(discordID, platform, id) {
+    return this.fetchRankandUpdateCache(discordID, { platform, id });
   },
 
-  getPlayerRank(member, allowance = 0.5) {
-    return cache.getLatestCache(member)
+  getPlayerRank(member, allowance = 24) {
+    return cache.getLatestRankCache(member.id)
       .then((cachedRank) => {
+        console.log('getLatestCache result', cachedRank);
         if (cachedRank === undefined) return undefined;
         return { cachedRank, validCache: this.isValidCache(cachedRank, allowance) };
       })
-      .then(({ cachedRank, valid }) => {
-        if (valid) return cachedRank;
-        return this.newPlayerInfo(cachedRank.defaultPlatform, cachedRank.discordID);
+      .then(({ cachedRank, validCache }) => {
+        if (validCache) return cachedRank;
+        return this.newPlayerInfo(member.id, cachedRank.defaultPlatform, cachedRank.discordID);
       });
   },
 
   initiateMember(member, { platform, id }) {
-    return cache.createMember(member, { platform, id })
+    return cache.createPlayer(member, { platform, id })
       .then(response => response);
   },
 
   getCache(member) {
-    return cache.getMemberInfo(member);
+    return cache.getPlayerInfo(member);
   },
 
   platformIDs,
