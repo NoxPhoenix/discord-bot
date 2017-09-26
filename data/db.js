@@ -1,7 +1,9 @@
 const Promise = require('bluebird');
 const sqlite3 = require('sqlite3');
 
-const db = new sqlite3.Database('./members');
+const config = require('../config.json');
+
+const db = new sqlite3.Database('./members.db');
 
 const dbAsync = Promise.promisifyAll(db);
 
@@ -20,81 +22,107 @@ function bootStrap() {
         id INTEGER PRIMARY KEY AUTOINCREMENT,
         discordID TEXT NOT NULL,
         dateOfValidity DATETIME DEFAULT CURRENT_TIMESTAMP,
-        duelMMR INTEGER,
-        duelTier INTEGER,
-        duelDivision INTEGER,
-        doublesMMR INTEGER,
-        doublesTier INTEGER,
-        doublesDivision INTEGER,
-        threesMMR INTEGER,
-        threesTier INTEGER,
-        threesDivision INTEGER,
-        cancerMMR INTEGER,
-        cancerTier INTEGER,
-        cancerDivision INTEGER,
+        ranked1v1MMR INTEGER,
+        ranked1v1Tier INTEGER,
+        ranked1v1Division INTEGER,
+        ranked2v2MMR INTEGER,
+        ranked2v2Tier INTEGER,
+        ranked2v2Division INTEGER,
+        ranked3v3MMR INTEGER,
+        ranked3v3Tier INTEGER,
+        ranked3v3Division INTEGER,
+        rankedSolo3v3MMR INTEGER,
+        rankedSolo3v3Tier INTEGER,
+        rankedSolo3v3Division INTEGER,
         rankSignature TEXT
       )`);
     });
 }
 
 const membersColumns = ['discordID', 'discordDiscriminator', 'defaultPlatform', 'steamID', 'psnID', 'xboxID'];
-const ranksColumns = ['discordID', 'dateOfValidity', 'duelMMR', 'duelTier', 'duelDivision', 'doublesMMR', 'doublesTier', 'doublesDivision', 'threesMMR', 'threesTier', 'threesDivision', 'cancerMMR', 'cancerTier', 'cancerDivision', 'rankSignature'];
+const ranksColumns = [
+  'discordID',
+  'ranked1v1MMR',
+  'ranked1v1Tier',
+  'ranked1v1Division',
+  'ranked2v2MMR',
+  'ranked2v2Tier',
+  'ranked2v2Division',
+  'rankedSoloMMR',
+  'rankedSoloTier',
+  'rankedSoloDivision',
+  'ranked3v3MMR',
+  'ranked3v3Tier',
+  'ranked3v3Division',
+  'rankSignature',
+];
+
 
 bootStrap()
   .then(() => {
     console.log('tables initiated');
   });
 
+function parseRankData(rankData) {
+  const currentRanks = rankData[config.currentSeasonID];
+  const ranks = [];
+  for (let i = 10; i < 14; i += 1) {
+    ranks.push(`"${currentRanks[i].rankpoints}"`, `"${currentRanks[i].tier}"`, `"${currentRanks[i].division}"`);
+  }
+  ranks.push(rankData.signatureUrl);
+  console.log(ranks.join(', '));
+  return ranks.join(', ');
+}
+
 module.exports = {
 
-  memberExists(member) {
-    return dbAsync.getAsync(`SELECT discordID FROM members WHERE discordID = ${member.id}`)
+  playerExists(member) {
+    return dbAsync.getAsync(`SELECT * FROM members WHERE discordID = "${member.id}"`)
       .then((res) => {
         if (res !== undefined) return true;
         return false;
       });
   },
 
-  updateMember(member, { platform, id }) {
-    return dbAsync.runAsync(`UPDATE members SET ${platform}ID = ${id}, defaultPlatform = ${platform} WHERE discordID = ${member.id}`)
-      .then(({ changes }) => changes);
-  },
-
-  createMember(member, gamerInfo) {
+  createPlayer(member, gamerInfo) {
     return this.memberExists(member)
       .then((exists) => {
-        if (exists) return this.updateMember(member, gamerInfo);
-        return this.initiateMember(member, gamerInfo);
+        if (exists) return this.updatePlayer(member, gamerInfo);
+        return this.initiatePlayer(member, gamerInfo);
       });
   },
 
-  initiateMember(member, { platform, id }) {
+  updatePlayer(member, { platform, id }) {
+    console.log(`UPDATE members SET ${platform}ID = "${id}", defaultPlatform = "${platform}" WHERE discordID = "${member.id}"`);
+    return dbAsync.runAsync(`UPDATE members SET ${platform}ID = "${id}", defaultPlatform = "${platform}" WHERE discordID = "${member.id}"`)
+      .then(() => true)
+      .catch(() => false);
+  },
+
+  initiatePlayer(member, { platform, id }) {
     const { user } = member;
     const platformID = `${platform}ID`;
     console.log('Sql statement ---', `INSERT INTO members (discordID, discordDiscriminator, defaultPlatform, ${platformID})
-    VALUES (${member.id}, ${user.discriminator}, ${platform}, ${id})`);
+    VALUES ("${member.id}", "${user.discriminator}", "${platform}", "${id}")`);
     dbAsync.runAsync(`INSERT INTO members (discordID, discordDiscriminator, defaultPlatform, ${platformID})
       VALUES ("${member.id}", "${user.discriminator}", "${platform}", "${id}")`)
       .then(({ lastID }) => lastID);
   },
 
   // TODO: Promisify
-  getLatestMemberCache(member) {
-    return dbAsync.getAsync(
-      `SELECT * FROM ranks
-      WHERE discordID = ${member.id}, DATE(dateOfValidity) = (SELECT MAX(DATE(dateOfValidity)) FROM ranks)`,
-      (err, data) => data,
-    );
+  getLatestRankCache(member) {
+    return dbAsync.getAsync(`SELECT * FROM ranks
+      WHERE discordID = "${member.id}", DATETIME("dateOfValidity") = (SELECT MAX(DATETIME("dateOfValidity")) FROM ranks)`);
   },
 
   // TODO: Promisify
-  getMemberInfo(member) {
-    return dbAsync.getAsync(`SELECT * FROM members WHERE discordID = ${member.id}`, (err, row) => row);
+  getPlayerInfo(member) {
+    return dbAsync.getAsync(`SELECT * FROM members WHERE discordID = "${member.id}"`);
   },
 
   // TODO: Promisify
-  createRankCache(member, rankData) {
-    //parse rankData into a string for statement
-    return dbAsync.runAsync(`INSERT INTO ranks (${ranksColumns}) VALUES (${member.id}, )`);
+  cacheCurrentRank(member, rankData) {
+    const rankString = parseRankData(rankData);
+    return dbAsync.runAsync(`INSERT INTO ranks (${ranksColumns}) VALUES ("${member.id}", ${rankString})`);
   },
 };
