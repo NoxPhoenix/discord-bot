@@ -38,11 +38,11 @@ module.exports = {
 
   playerByID({ platform, id }) {
     return new Promise((resolve, reject) => {
-      statClient.getPlayer(id, rls.platforms[platform.toUpperCase()], (status, data) => {
+      statClient.getPlayer(id, rls.platforms[platform.toUpperCase()], (status, data) => { // eslint-disable-line consistent-return
         if (status === 200 || status === 204) {
-          console.log('playerData', data);
-          cache.cacheCurrentRank(data);
-          resolve(data);
+          return cache.cacheCurrentRank(id, data)
+            .then(() => cache.getPlayerInfo(id))
+            .then(ranks => resolve(ranks));
         }
         reject(status);
       });
@@ -50,14 +50,27 @@ module.exports = {
   },
 
   isValidCache(cachedRank, allowance) {
-    currentDateTime = moment();
-    cachedDateTime = moment(cachedRank.dateOfValidity);
-    if ()
-  }
+    const currentDateTime = moment();
+    const cachedDateTime = moment(cachedRank.dateOfValidity);
+    const age = currentDateTime.diff(cachedDateTime, 'days', true);
+    if (age > allowance) return false;
+    return true;
+  },
 
-  getPlayer(member) {
+  newPlayerInfo(platform, id) {
+    return this.playerByID({ platform, id });
+  },
+
+  getPlayerRank(member, allowance = 0.5) {
     return cache.getLatestCache(member)
-      .then((cachedRank) => )
+      .then((cachedRank) => {
+        if (cachedRank === undefined) return undefined;
+        return { cachedRank, validCache: this.isValidCache(cachedRank, allowance) };
+      })
+      .then(({ cachedRank, valid }) => {
+        if (valid) return cachedRank;
+        return this.newPlayerInfo(cachedRank.defaultPlatform, cachedRank.discordID);
+      });
   },
 
   initiateMember(member, { platform, id }) {

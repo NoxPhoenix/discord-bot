@@ -64,7 +64,7 @@ bootStrap()
   });
 
 function parseRankData(rankData) {
-  const currentRanks = rankData[config.currentSeasonID];
+  const currentRanks = rankData.rankedSeasons[config.currentSeasonID];
   const ranks = [];
   for (let i = 10; i < 14; i += 1) {
     ranks.push(`"${currentRanks[i].rankpoints}"`, `"${currentRanks[i].tier}"`, `"${currentRanks[i].division}"`);
@@ -116,13 +116,13 @@ module.exports = {
   },
 
   // TODO: Promisify
-  getPlayerInfo(member) {
-    return dbAsync.getAsync(`SELECT * FROM members WHERE discordID = "${member.id}"`);
+  getPlayerInfo(id) {
+    return dbAsync.getAsync(`SELECT * FROM members WHERE discordID = "${id}"`);
   },
 
   // TODO: Promisify
-  cacheCurrentRank(member, rankData) {
+  cacheCurrentRank(id, rankData) {
     const rankString = parseRankData(rankData);
-    return dbAsync.runAsync(`INSERT INTO ranks (${ranksColumns}) VALUES ("${member.id}", ${rankString})`);
+    return dbAsync.runAsync(`INSERT INTO ranks (${ranksColumns}) VALUES ("${id}", ${rankString})`);
   },
 };
