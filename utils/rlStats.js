@@ -65,30 +65,31 @@ module.exports = {
     return true;
   },
 
-  newPlayerInfo(discordID, platform, id) {
-    return this.fetchRankandUpdateCache(discordID, { platform, id });
+  updateCacheForMember({ id: memberID }) {
+    return cache.getPlayerInfo(memberID)
+      .then(player => this.fetchRankandUpdateCache(memberID, { platform: player.defaultPlatform, id: player[`${player.defaultPlatform}ID`] }));
   },
 
   getPlayerRank(member, allowance = 24) {
     return cache.getLatestRankCache(member.id)
       .then((cachedRank) => {
         console.log('getLatestCache result', cachedRank);
-        if (cachedRank === undefined) return undefined;
+        if (cachedRank === undefined) return this.updateCacheForMember(member);
         return { cachedRank, validCache: this.isValidCache(cachedRank, allowance) };
       })
       .then(({ cachedRank, validCache }) => {
         if (validCache) return cachedRank;
-        return this.newPlayerInfo(member.id, cachedRank.defaultPlatform, cachedRank.discordID);
+        return this.updateCacheForMember(member);
       });
   },
 
   initiateMember(member, { platform, id }) {
     return cache.createPlayer(member, { platform, id })
-      .then(response => response);
+      .then(() => this.getPlayerRank(member, 0.0003));
   },
 
   getCache(member) {
-    return cache.getPlayerInfo(member);
+    return cache.getPlayerInfo(member.id);
   },
 
   platformIDs,

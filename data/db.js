@@ -94,9 +94,7 @@ module.exports = {
 
   updatePlayer(member, { platform, id }) {
     console.log(`UPDATE members SET ${platform}ID = "${id}", defaultPlatform = "${platform}" WHERE discordID = "${member.id}"`);
-    return dbAsync.runAsync(`UPDATE members SET ${platform}ID = "${id}", defaultPlatform = "${platform}" WHERE discordID = "${member.id}"`)
-      .then(() => true)
-      .catch(() => false);
+    return dbAsync.runAsync(`UPDATE members SET ${platform}ID = "${id}", defaultPlatform = "${platform}" WHERE discordID = "${member.id}"`);
   },
 
   initiatePlayer(member, { platform, id }) {
@@ -106,7 +104,6 @@ module.exports = {
       VALUES ("${member.id}", "${user.discriminator}", "${platform}", "${id}")`);
   },
 
-  // TODO: Promisify
   getLatestRankCache(discordID) {
     return dbAsync.getAsync(`SELECT * FROM ranks
       WHERE discordID = "${discordID}" ORDER BY dateOfValidity DESC LIMIT 1`)
@@ -120,8 +117,12 @@ module.exports = {
   },
 
   // TODO: Promisify
-  getPlayerInfo(id) {
-    return dbAsync.getAsync(`SELECT * FROM members WHERE discordID = "${id}"`);
+  getPlayerInfo(discordID) {
+    return dbAsync.getAsync(`SELECT * FROM members WHERE discordID = "${discordID}"`)
+      .then((player) => {
+        if (player !== undefined) return player;
+        throw new Error('Player info not found, make sure to set player profile with +stats set (platform) (id)');
+      });
   },
 
   // TODO: Promisify
