@@ -87,7 +87,8 @@ module.exports = {
       .then(rankData => cache.createNewRankCacheAndReturn(discordID, rankData));
   },
 
-  setPlayerProfile(discordID, platform, id) {
+  setPlayerProfile(member, platform, id) {
+    const { id: discordID } = member;
     if (!validPlatform(platform)) return Promise.reject(new Error(`${platform} is not a valid platform`));
     return lookupRank(platform, id)
       .then(() => {
@@ -96,7 +97,7 @@ module.exports = {
       .then((playerProfile) => {
         console.log('playerProfileFound', playerProfile);
         if (playerProfile !== undefined) return cache.updatePlayerProfile(discordID, platform, id);
-        return cache.createPlayerProfile(discordID, platform, id);
+        return cache.createPlayerProfile(member, platform, id);
       })
       .then(() => this.getRankFromMemberWithProfile(discordID));
   },
