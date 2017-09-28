@@ -5,6 +5,7 @@ const rls = require('rls-api');
 const config = require('../config');
 
 const cache = require('../data/db');
+const { stats: { PlayerProfileNotFoundError, PlayerStatsNotFoundError } } = require('../errors');
 
 const statClient = new rls.Client({
   token: config.statsApiToken,
@@ -33,65 +34,70 @@ const playlistIDs = {
   dropShot: '23',
 };
 
-module.exports = {
-
-  fetchRankFromApi(platform, id) {
-    return new Promise((resolve, reject) => {
-      console.log(platform, id);
-      statClient.getPlayer(id, rls.platforms[platform.toUpperCase()], (status, data) => {
-        console.log(status);
-        if (status !== 200 && status !== 204) reject(status);
-        resolve(data);
-      });
+function fetchRankFromApi(platform, id) {
+  return new Promise((resolve, reject) => {
+    statClient.getPlayer(id, rls.platforms[platform.toUpperCase()], (status, data) => {
+      console.log(status);
+      if (status !== 200 && status !== 204) reject(status);
+      resolve(data);
     });
-  },
+  });
+}
 
-  fetchRankandUpdateCache(discordID, { platform, id }) {
-    return this.fetchRankFromApi(platform, id)
-      .then(data => cache.cacheCurrentRank(discordID, id, data))
-      .then(() => cache.getLatestRankCache(discordID))
-      .catch((err) => {
-        console.log(err);
-        throw new Error(err);
-      });
-  },
+function lookupRank(platform, id) {
+  return fetchRankFromApi(platform, id)
+    .catch(() => {
+      throw new PlayerStatsNotFoundError(platform, id);
+    });
+}
 
-  isValidCache(cachedRank, allowance) {
-    const currentDateTime = moment();
-    const cachedDateTime = moment(cachedRank.dateOfValidity);
-    const age = cachedDateTime.diff(currentDateTime, 'hours', true);
-    console.log('cache is the following old...', age);
-    if (age > allowance) return false;
-    return true;
-  },
+function validPlatform(platform) {
+  const validPlatforms = ['steam', 'psn', 'xbox'];
+  return validPlatforms.includes(platform);
+}
 
-  updateCacheForMember({ id: memberID }) {
-    return cache.getPlayerInfo(memberID)
-      .then(player => this.fetchRankandUpdateCache(memberID, { platform: player.defaultPlatform, id: player[`${player.defaultPlatform}ID`] }));
-  },
+function isValidCache(rankCache, allowance = 0.03) {
+  if (!rankCache) return false;
+  const currentDateTime = moment();
+  const cachedDateTime = moment(rankCache.dateOfValidity);
+  const age = cachedDateTime.diff(currentDateTime, 'hours', true);
+  console.log('cache is the following old...', age);
+  if (age > allowance) return false;
+  return true;
+}
 
-  getPlayerRank(member, allowance = 24) {
-    return cache.getLatestRankCache(member.id)
-      .then((cachedRank) => {
-        console.log('getLatestCache result', cachedRank);
-        if (cachedRank === undefined) return this.updateCacheForMember(member);
-        return { cachedRank, validCache: this.isValidCache(cachedRank, allowance) };
+function getPlayerProfile(discordID) {
+  return cache.getPlayerProfileFromDiscorID(discordID);
+}
+
+
+module.exports = {
+  getRankFromMemberWithProfile(discordID) {
+    return getPlayerProfile(discordID)
+      .then((playerProfile) => {
+        this.playerProfile = playerProfile;
+        if (!playerProfile) throw new PlayerProfileNotFoundError(discordID);
+        return cache.getLatestRankCache(discordID);
       })
-      .then(({ cachedRank, validCache }) => {
-        if (validCache) return cachedRank;
-        return this.updateCacheForMember(member);
-      });
+      .then((rankCache) => {
+        if (isValidCache(rankCache)) return rankCache;
+        const { defaultPlatform } = this.playerProfile;
+        return lookupRank(defaultPlatform, this.playerProfile[`${defaultPlatform}ID`]);
+      })
+      .then(rankData => cache.createNewRankCacheAndReturn(discordID, rankData));
   },
 
-  initiateMember(member, { platform, id }) {
-    return cache.createPlayer(member, { platform, id })
-      .then(() => this.getPlayerRank(member, 0.0003));
+  setPlayerProfile(discordID, platform, id) {
+    if (!validPlatform(platform)) return Promise.reject(new Error(`${platform} is not a valid platform`));
+    return lookupRank(platform, id)
+      .then(() => {
+        return cache.getPlayerProfileFromDiscorID(discordID);
+      })
+      .then((playerProfile) => {
+        console.log('playerProfileFound', playerProfile);
+        if (playerProfile !== undefined) return cache.updatePlayerProfile(discordID, platform, id);
+        return cache.createPlayerProfile(discordID, platform, id);
+      })
+      .then(() => this.getRankFromMemberWithProfile(discordID));
   },
-
-  getCache(member) {
-    return cache.getPlayerInfo(member.id);
-  },
-
-  platformIDs,
-  playlistIDs,
 };

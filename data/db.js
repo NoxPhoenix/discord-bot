@@ -76,28 +76,12 @@ function parseRankData(rankData) {
 
 module.exports = {
 
-  playerExists(member) {
-    return dbAsync.getAsync(`SELECT * FROM members WHERE discordID = "${member.id}"`)
-      .then((res) => {
-        if (res !== undefined) return true;
-        return false;
-      });
-  },
-
-  createPlayer(member, gamerInfo) {
-    return this.playerExists(member)
-      .then((exists) => {
-        if (exists) return this.updatePlayer(member, gamerInfo);
-        return this.initiatePlayer(member, gamerInfo);
-      });
-  },
-
-  updatePlayer(member, { platform, id }) {
+  updatePlayerProfile(member, { platform, id }) {
     console.log(`UPDATE members SET ${platform}ID = "${id}", defaultPlatform = "${platform}" WHERE discordID = "${member.id}"`);
     return dbAsync.runAsync(`UPDATE members SET ${platform}ID = "${id}", defaultPlatform = "${platform}" WHERE discordID = "${member.id}"`);
   },
 
-  initiatePlayer(member, { platform, id }) {
+  createPlayerProfile(member, platform, id) {
     const { user } = member;
     const platformID = `${platform}ID`;
     return dbAsync.runAsync(`INSERT INTO members (discordID, discordDiscriminator, defaultPlatform, ${platformID})
@@ -116,19 +100,18 @@ module.exports = {
       });
   },
 
-  // TODO: Promisify
-  getPlayerInfo(discordID) {
-    return dbAsync.getAsync(`SELECT * FROM members WHERE discordID = "${discordID}"`)
-      .then((player) => {
-        if (player !== undefined) return player;
-        throw new Error('Player info not found, make sure to set player profile with +stats set (platform) (id)');
-      });
+  getPlayerProfileFromDiscorID(discordID) {
+    return dbAsync.getAsync(`SELECT * FROM members WHERE discordID = "${discordID}"`);
   },
 
-  // TODO: Promisify
-  cacheCurrentRank(discordID, id, rankData) {
+  createNewRankCache(discordID, rankData) {
     const rankString = parseRankData(rankData);
     const ranksColumnsStrings = ranksColumns.join(', ');
     return dbAsync.runAsync(`INSERT INTO ranks (${ranksColumnsStrings}) VALUES ("${discordID}", ${rankString})`);
+  },
+
+  createNewRankCacheAndReturn(discordID, rankData) {
+    return this.createNewRankCache(discordID, rankData)
+      .then(() => this.getLatestRankCache(discordID));
   },
 };
