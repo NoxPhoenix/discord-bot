@@ -70,15 +70,13 @@ function parseRankData(rankData) {
     ranks.push(`"${currentRanks[i].rankPoints}"`, `"${currentRanks[i].tier}"`, `"${currentRanks[i].division}"`);
   }
   ranks.push(`"${rankData.signatureUrl}"`);
-  console.log(ranks.join(', '));
   return ranks.join(', ');
 }
 
 module.exports = {
 
-  updatePlayerProfile(member, { platform, id }) {
-    console.log(`UPDATE members SET ${platform}ID = "${id}", defaultPlatform = "${platform}" WHERE discordID = "${member.id}"`);
-    return dbAsync.runAsync(`UPDATE members SET ${platform}ID = "${id}", defaultPlatform = "${platform}" WHERE discordID = "${member.id}"`);
+  updatePlayerProfile(discordID, platform, id) {
+    return dbAsync.runAsync(`UPDATE members SET ${platform}ID = "${id}", defaultPlatform = "${platform}" WHERE discordID = "${discordID}"`);
   },
 
   createPlayerProfile(member, platform, id) {
@@ -90,14 +88,7 @@ module.exports = {
 
   getLatestRankCache(discordID) {
     return dbAsync.getAsync(`SELECT * FROM ranks
-      WHERE discordID = "${discordID}" ORDER BY dateOfValidity DESC LIMIT 1`)
-      .then((cache) => {
-        console.log('cacheFound', cache);
-        return cache;
-      })
-      .catch((err) => {
-        console.log('latestRankCacheError!', err);
-      });
+      WHERE discordID = "${discordID}" ORDER BY dateOfValidity DESC LIMIT 1`);
   },
 
   getPlayerProfileFromDiscorID(discordID) {

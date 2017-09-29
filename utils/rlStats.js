@@ -37,7 +37,6 @@ const playlistIDs = {
 function fetchRankFromApi(platform, id) {
   return new Promise((resolve, reject) => {
     statClient.getPlayer(id, rls.platforms[platform.toUpperCase()], (status, data) => {
-      console.log(status);
       if (status !== 200 && status !== 204) reject(status);
       resolve(data);
     });
@@ -58,10 +57,9 @@ function validPlatform(platform) {
 
 function isValidCache(rankCache, allowance = 0.03) {
   if (!rankCache) return false;
-  const currentDateTime = moment();
-  const cachedDateTime = moment(rankCache.dateOfValidity);
-  const age = cachedDateTime.diff(currentDateTime, 'hours', true);
-  console.log('cache is the following old...', age);
+  const currentDateTime = moment.utc();
+  const cachedDateTime = moment.utc(rankCache.dateOfValidity);
+  const age = currentDateTime.diff(cachedDateTime, 'hours', true);
   if (age > allowance) return false;
   return true;
 }
@@ -82,9 +80,9 @@ module.exports = {
       .then((rankCache) => {
         if (isValidCache(rankCache)) return rankCache;
         const { defaultPlatform } = this.playerProfile;
-        return lookupRank(defaultPlatform, this.playerProfile[`${defaultPlatform}ID`]);
-      })
-      .then(rankData => cache.createNewRankCacheAndReturn(discordID, rankData));
+        return lookupRank(defaultPlatform, this.playerProfile[`${defaultPlatform}ID`])
+          .then(rankData => cache.createNewRankCacheAndReturn(discordID, rankData));
+      });
   },
 
   setPlayerProfile(member, platform, id) {
@@ -95,7 +93,6 @@ module.exports = {
         return cache.getPlayerProfileFromDiscorID(discordID);
       })
       .then((playerProfile) => {
-        console.log('playerProfileFound', playerProfile);
         if (playerProfile !== undefined) return cache.updatePlayerProfile(discordID, platform, id);
         return cache.createPlayerProfile(member, platform, id);
       })
