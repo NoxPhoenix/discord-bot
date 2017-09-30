@@ -1,4 +1,3 @@
-const config = require('../config.json');
 const voiceChannels = require('../lib/voiceChannels');
 
 function stateChangeType({ oldState, newState }) {

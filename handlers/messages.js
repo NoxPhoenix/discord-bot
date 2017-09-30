@@ -1,4 +1,4 @@
-const config = require('../config.json');
+const admin = require('../admin');
 const messages = require('../lib/messages');
 
 
@@ -12,7 +12,7 @@ class MessageHandler {
     this.bot.on('message', (message) => {
       const { content } = message;
       if (message.author.bot) return;
-      if (content.startsWith(config.Prefix)) callCommand(message);
+      if (content.startsWith(admin.PREFIX)) callCommand(message);
     });
   }
 }
