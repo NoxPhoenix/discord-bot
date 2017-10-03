@@ -8,4 +8,6 @@ module.exports = {
     return { command, args };
   },
 
+  roleFromGuildByName
+
 };
