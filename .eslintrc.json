@@ -5,6 +5,7 @@
     ],
     "rules": {
         "arrow-body-style": ["warn", "never"],
-        "max-len": ["warn", 130]
+        "max-len": ["warn", 130],
+        "space-before-function-paren": ["error", "always"]
     }
 }

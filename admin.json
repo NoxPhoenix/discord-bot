@@ -1,13 +1,13 @@
 {
-  "PREFIX" : "+",
-  "ADMINS" : [
-  "89603657896595456"
-  ],
-  "ADMIN_ROLES" : [
-    "355896756447215618"
-  ],
-  "WELCOME_MESSAGE": "Welcome to the LFM Community! We're so glad you're here! Now, let's get weird!",
-  "SCALABLE_CHANNELS" : [
-    
-  ]
+	"PREFIX": "+",
+	"ADMINS": [
+		"89603657896595456"
+	],
+	"ADMIN_ROLES": [
+		"355896756447215618"
+	],
+	"WELCOME_MESSAGE": "Welcome to the LFM Community! We're so glad you're here! Now, let's get weird!",
+	"SCALABLE_CHANNELS": [
+		"butts"
+	]
 }
