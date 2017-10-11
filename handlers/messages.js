@@ -2,12 +2,12 @@ const admin = require('../admin');
 const messages = require('../lib/messages');
 
 
-function callCommand(message) {
+function callCommand (message) {
   return messages.commands.run(message);
 }
 
 class MessageHandler {
-  constructor(bot) {
+  constructor (bot) {
     this.bot = bot;
     this.bot.on('message', (message) => {
       const { content } = message;
@@ -22,7 +22,7 @@ class MessageHandler {
   }
 }
 
-function messageHandler(bot) {
+function messageHandler (bot) {
   return new MessageHandler(bot);
 }
 

@@ -7,11 +7,12 @@ const db = new sqlite3.Database('./members.db');
 
 const dbAsync = Promise.promisifyAll(db);
 
-function bootStrap() {
+function bootStrap () {
   return dbAsync.runAsync(`CREATE TABLE IF NOT EXISTS members(
     id INTEGER PRIMARY KEY AUTOINCREMENT,
     discordID TEXT NOT NULL UNIQUE,
     discordDiscriminator TEXT NOT NULL UNIQUE,
+    admin INTEGER NOT NULL,
     defaultPlatform TEXT,
     steamID TEXT UNIQUE,
     psnID TEXT UNIQUE,
@@ -63,7 +64,7 @@ bootStrap()
     console.log('tables initiated');
   });
 
-function parseRankData(rankData) {
+function parseRankData (rankData) {
   const currentRanks = rankData.rankedSeasons[config.currentSeasonID];
   const ranks = [];
   for (let i = 10; i < 14; i += 1) {
@@ -75,33 +76,33 @@ function parseRankData(rankData) {
 
 module.exports = {
 
-  updatePlayerProfile(discordID, platform, id) {
+  updatePlayerProfile (discordID, platform, id) {
     return dbAsync.runAsync(`UPDATE members SET ${platform}ID = "${id}", defaultPlatform = "${platform}" WHERE discordID = "${discordID}"`);
   },
 
-  createPlayerProfile(member, platform, id) {
+  createPlayerProfile (member, platform, id) {
     const { user } = member;
     const platformID = `${platform}ID`;
     return dbAsync.runAsync(`INSERT INTO members (discordID, discordDiscriminator, defaultPlatform, ${platformID})
       VALUES ("${member.id}", "${user.discriminator}", "${platform}", "${id}")`);
   },
 
-  getLatestRankCache(discordID) {
+  getLatestRankCache (discordID) {
     return dbAsync.getAsync(`SELECT * FROM ranks
       WHERE discordID = "${discordID}" ORDER BY dateOfValidity DESC LIMIT 1`);
   },
 
-  getPlayerProfileFromDiscorID(discordID) {
+  getPlayerProfileFromDiscorID (discordID) {
     return dbAsync.getAsync(`SELECT * FROM members WHERE discordID = "${discordID}"`);
   },
 
-  createNewRankCache(discordID, rankData) {
+  createNewRankCache (discordID, rankData) {
     const rankString = parseRankData(rankData);
     const ranksColumnsStrings = ranksColumns.join(', ');
     return dbAsync.runAsync(`INSERT INTO ranks (${ranksColumnsStrings}) VALUES ("${discordID}", ${rankString})`);
   },
 
-  createNewRankCacheAndReturn(discordID, rankData) {
+  createNewRankCacheAndReturn (discordID, rankData) {
     return this.createNewRankCache(discordID, rankData)
       .then(() => this.getLatestRankCache(discordID));
   },

@@ -1,8 +1,11 @@
+const _ = require('lodash');
 const Watcher = require('feed-watcher');
 const schedule = require('node-schedule');
 
+const admin = require('../admin');
+
 const feed = 'http://lfmannfield.podbean.com/feed/';
-const interval = 35; // seconds
+const interval = 120; // seconds
 
 const watcher = new Watcher(feed, interval);
 
@@ -31,12 +34,23 @@ schedule.scheduleJob(tuesdaysAtMidnight, () => {
 });
 
 class Podcast {
-  constructor(bot) {
+  constructor (bot) {
     this.bot = bot;
+    this.botChannels = this.bot.channels.array();
+    this.alertChannels = _.filter(this.botChannels, (channel) => {
+      // console.log(channel.id);
+      return _.includes(admin.ALERT_CHANNELS, `${id}`);
+    });
+  }
+
+  alertForNewEpisode () {
+    console.log(this.bot.channels.array());
+    console.log(this.botChannels);
+    // console.log(this.alertChannels);
   }
 }
 
-function podcast(bot) {
+function podcast (bot) {
   return new Podcast(bot);
 }
 
