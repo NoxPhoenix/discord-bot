@@ -7,6 +7,8 @@ const db = new sqlite3.Database('./members.db');
 
 const dbAsync = Promise.promisifyAll(db);
 
+
+// TODO: Refactor to separate the ranks db, or relate discordId to members and separate config db
 function bootStrap () {
   return dbAsync.runAsync(`CREATE TABLE IF NOT EXISTS members(
     id INTEGER PRIMARY KEY AUTOINCREMENT,
@@ -37,7 +39,10 @@ function bootStrap () {
         rankedSolo3v3Division INTEGER,
         rankSignature TEXT
       )`);
-    });
+    })
+      .then(() => {
+        return dbAsync('CREATE TABLE IF NOT EXISTS')
+      })
 }
 
 const membersColumns = ['discordID', 'discordDiscriminator', 'defaultPlatform', 'steamID', 'psnID', 'xboxID'];
