@@ -1,17 +1,42 @@
+const Promise = require('bluebird');
 const _ = require('lodash');
 const Watcher = require('feed-watcher');
 const schedule = require('node-schedule');
 
 const admin = require('../admin');
 
-const feed = 'http://lfmannfield.podbean.com/feed/';
-const interval = 120; // seconds
+const feed = 'http://lorem-rss.herokuapp.com/feed?unit=second&interval=20';
+const interval = 10; // seconds
 
 const watcher = new Watcher(feed, interval);
+
+class guildHandler {
+  constructor(bot) {
+    this.bot = bot;
+    this.bot.on('ready', () => {
+      server.join.run(member);
+    });
+  }
+}
+
+function getChannels (guild, channels) {
+  Promise.map(channels, (channel) => {
+    guild.channels.get(channel);
+  });
+}
+
+function podcastMessage (channels, entry) {
+  Promise.map(channels, (channel) => {
+    return channel.send(['New episode of Live From Mannfield is up!!!', entry]);
+  });
+}
+
+watcher.start();
 
 watcher.on('new entries', (entries) => {
   entries.forEach((entry) => {
     console.log(entry.title);
+    return podcastMessage(admin.ALERT_CHANNELS);
   });
 });
 
@@ -32,26 +57,3 @@ schedule.scheduleJob(mondaysAtMidnight, () => {
 schedule.scheduleJob(tuesdaysAtMidnight, () => {
   watcher.stop();
 });
-
-class Podcast {
-  constructor (bot) {
-    this.bot = bot;
-    this.botChannels = this.bot.channels.array();
-    this.alertChannels = _.filter(this.botChannels, (channel) => {
-      // console.log(channel.id);
-      return _.includes(admin.ALERT_CHANNELS, `${id}`);
-    });
-  }
-
-  alertForNewEpisode () {
-    console.log(this.bot.channels.array());
-    console.log(this.botChannels);
-    // console.log(this.alertChannels);
-  }
-}
-
-function podcast (bot) {
-  return new Podcast(bot);
-}
-
-module.exports = podcast;

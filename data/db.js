@@ -39,10 +39,13 @@ function bootStrap () {
         rankedSolo3v3Division INTEGER,
         rankSignature TEXT
       )`);
-    })
-      .then(() => {
-        return dbAsync('CREATE TABLE IF NOT EXISTS')
-      })
+    });
+    // .then(() => {
+    //   return dbAsync.runAsync(`CREATE TABLE IF NOT EXISTS admin(
+    //     name TEXT UNIQUE,
+    //     value TEXT,
+    //     `);
+    // });
 }
 
 const membersColumns = ['discordID', 'discordDiscriminator', 'defaultPlatform', 'steamID', 'psnID', 'xboxID'];
@@ -82,7 +85,8 @@ function parseRankData (rankData) {
 module.exports = {
 
   updatePlayerProfile (discordID, platform, id) {
-    return dbAsync.runAsync(`UPDATE members SET ${platform}ID = "${id}", defaultPlatform = "${platform}" WHERE discordID = "${discordID}"`);
+    return dbAsync.runAsync(`UPDATE members SET ${platform}ID = "${id}",
+      defaultPlatform = "${platform}" WHERE discordID = "${discordID}"`);
   },
 
   createPlayerProfile (member, platform, id) {
