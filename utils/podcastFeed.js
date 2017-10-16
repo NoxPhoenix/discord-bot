@@ -1,44 +1,43 @@
 const Promise = require('bluebird');
-const _ = require('lodash');
+// const _ = require('lodash');
 const Watcher = require('feed-watcher');
 const schedule = require('node-schedule');
 
 const admin = require('../admin');
 
-const feed = 'http://lorem-rss.herokuapp.com/feed?unit=second&interval=20';
-const interval = 10; // seconds
+const feed = 'https://nox-savage.squarespace.com/episodes?format=rss';
+const interval = 120; // seconds
 
 const watcher = new Watcher(feed, interval);
 
-class guildHandler {
-  constructor(bot) {
+const botHolder = {};
+
+class Bot {
+  constructor (bot) {
     this.bot = bot;
-    this.bot.on('ready', () => {
-      server.join.run(member);
+    this.alertChannelsIds = admin.ALERT_CHANNELS;
+  }
+
+  getChannels () {
+    return Promise.map(this.alertChannelsIds, (channelId) => {
+      return this.bot.channels.get(channelId);
     });
+  }
+
+  podcastAlert (message) {
+    return this.getChannels()
+      .then((channels) => {
+        return Promise.map(channels, (channel) => {
+          return channel.send(message);
+        });
+      });
   }
 }
 
-function getChannels (guild, channels) {
-  Promise.map(channels, (channel) => {
-    guild.channels.get(channel);
-  });
+function bootstrap (bot) {
+  botHolder.bot = new Bot(bot);
+  return botHolder.bot;
 }
-
-function podcastMessage (channels, entry) {
-  Promise.map(channels, (channel) => {
-    return channel.send(['New episode of Live From Mannfield is up!!!', entry]);
-  });
-}
-
-watcher.start();
-
-watcher.on('new entries', (entries) => {
-  entries.forEach((entry) => {
-    console.log(entry.title);
-    return podcastMessage(admin.ALERT_CHANNELS);
-  });
-});
 
 const mondaysAtMidnight = new schedule.RecurrenceRule();
 mondaysAtMidnight.dayOfWeek = 1;
@@ -57,3 +56,15 @@ schedule.scheduleJob(mondaysAtMidnight, () => {
 schedule.scheduleJob(tuesdaysAtMidnight, () => {
   watcher.stop();
 });
+
+watcher.on('new entries', (entries) => {
+  entries.forEach((entry) => {
+    console.log(entry);
+    return botHolder.bot.podcastAlert(`
+-- New Episode of LFM is out! --
+${entry.link}
+`);
+  });
+});
+
+module.exports = bootstrap;

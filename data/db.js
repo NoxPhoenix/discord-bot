@@ -40,12 +40,6 @@ function bootStrap () {
         rankSignature TEXT
       )`);
     });
-    // .then(() => {
-    //   return dbAsync.runAsync(`CREATE TABLE IF NOT EXISTS admin(
-    //     name TEXT UNIQUE,
-    //     value TEXT,
-    //     `);
-    // });
 }
 
 const membersColumns = ['discordID', 'discordDiscriminator', 'defaultPlatform', 'steamID', 'psnID', 'xboxID'];
