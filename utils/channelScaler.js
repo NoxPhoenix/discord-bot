@@ -2,11 +2,11 @@ const Promise = require('bluebird');
 
 const Scaler = {
 
-  memberCount({ members }) {
+  memberCount ({ members }) {
     return members.size;
   },
 
-  duplicatesCheck(channel) {
+  duplicatesCheck (channel) {
     const channelName = channel.name;
     const duplicates = [];
     return Promise.map(channel.guild.channels.array(), (c) => {
@@ -16,7 +16,7 @@ const Scaler = {
       .then(() => duplicates);
   },
 
-  emptyDuplicates(channel) {
+  emptyDuplicates (channel) {
     const emptyDupes = [];
     return this.duplicatesCheck(channel)
       .then((duplicates) => {
@@ -28,7 +28,7 @@ const Scaler = {
       });
   },
 
-  duplicate(channel) {
+  duplicate (channel) {
     return this.duplicatesCheck(channel)
       .then(duplicates => (
         channel.guild.createChannel(`${channel.name} ${duplicates.length + 1}`, 'voice')
@@ -36,7 +36,7 @@ const Scaler = {
       ));
   },
 
-  scale(channel, threshold = 1) {
+  scale (channel, threshold = 1) {
     return this.emptyDuplicates(channel)
       .then((emptyDupes) => {
         if (channel.members.size >= threshold && emptyDupes.length === 0) return this.duplicate(channel);
@@ -44,7 +44,7 @@ const Scaler = {
       });
   },
 
-  scaleDown(channel) {
+  scaleDown (channel) {
     this.emptyDuplicates(channel)
       .then((emptyDupes) => {
         emptyDupes.splice(0, 1);
