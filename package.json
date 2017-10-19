@@ -21,25 +21,25 @@
   },
   "homepage": "https://github.com/NoxPhoenix/discord-bot#readme",
   "dependencies": {
-    "bluebird": "^3.5.0",
+    "bluebird": "^3.5.1",
     "discord.js": "^11.2.1",
     "feed-watcher": "^0.2.1",
     "json-io-promised": "^1.0.2",
     "lodash": "^4.17.4",
-    "moment": "^2.18.1",
+    "moment": "^2.19.1",
     "node-schedule": "^1.2.5",
     "promise-sqlite": "^1.5.0",
     "random-animal": "^1.0.7",
     "random-cat": "^1.0.1",
-    "request": "^2.81.0",
+    "request": "^2.83.0",
     "rls-api": "^1.0.2",
-    "sqlite3": "^3.1.11",
+    "sqlite3": "^3.1.13",
     "sqlite3-promises": "^1.0.0",
     "uws": "^0.14.5"
   },
   "devDependencies": {
-    "eslint": "^4.6.1",
-    "eslint-config-airbnb-base": "^12.0.0",
+    "eslint": "^4.9.0",
+    "eslint-config-airbnb-base": "^12.1.0",
     "eslint-plugin-import": "^2.7.0"
   }
 }
