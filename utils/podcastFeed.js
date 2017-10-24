@@ -3,7 +3,7 @@ const Promise = require('bluebird');
 const Watcher = require('feed-watcher');
 const schedule = require('node-schedule');
 
-const admin = require('../admin');
+const admin = require('../utils/admin');
 
 const feed = 'https://nox-savage.squarespace.com/episodes?format=rss';
 const interval = 120; // seconds
@@ -15,7 +15,7 @@ const botHolder = {};
 class Bot {
   constructor (bot) {
     this.bot = bot;
-    this.alertChannelsIds = admin.ALERT_CHANNELS;
+    this.alertChannelsIds = admin.alertChannels();
   }
 
   getChannels () {
