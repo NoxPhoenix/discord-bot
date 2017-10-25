@@ -1,14 +1,14 @@
 {
-	"PREFIX": "+",
-	"ADMINS": [
+	"prefix": "+",
+	"admins": [
 		"89603657896595456"
 	],
-	"ADMIN_ROLES": [
+	"adminRoles": [
 		"355896756447215618"
 	],
-	"WELCOME_MESSAGE": "Welcome to the LFM Community! We're so glad you're here! Now, let's get weird!",
-	"SCALABLE_CHANNELS": [
+	"welcomeMessage": "Welcome to the LFM Community! We're so glad you're here! Now, let's get weird!",
+	"scalableChannels": [
 		"butts"
 	],
-	"ALERT_CHANNELS": ["358704411825930240"]
+	"alertChannels": ["358704411825930240"]
 }

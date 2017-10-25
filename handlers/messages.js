@@ -1,6 +1,4 @@
-const admin = require('../admin');
 const messages = require('../lib/messages');
-
 
 function callCommand (message) {
   return messages.commands.run(message);
@@ -18,7 +16,7 @@ class MessageHandler {
       moderate(message);
       switch (true) {
         case (message.author.bot || message.channel.type !== 'text'): return;
-        case (content.startsWith(admin.PREFIX)):
+        case (content.startsWith(global.admin.prefix)):
           callCommand(message);
           break;
         default: break;

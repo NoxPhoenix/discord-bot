@@ -1,9 +1,7 @@
-const admin = require('../admin');
-
-const makeProfilePrompt = `Please setup your profile with ${admin.PREFIX}me set (platform) (id)`;
+const makeProfilePrompt = `Please setup your profile with ${global.admin.prefix}me set (platform) (id)`;
 
 class PlayerProfileNotFoundError extends Error {
-  constructor(memberID) {
+  constructor (memberID) {
     super(makeProfilePrompt);
 
     this.memberID = memberID;
@@ -11,7 +9,7 @@ class PlayerProfileNotFoundError extends Error {
 }
 
 class PlayerStatsNotFoundError extends Error {
-  constructor(platform, id) {
+  constructor (platform, id) {
     super(`Error finding stats for ${id} on ${platform}`);
   }
 }
